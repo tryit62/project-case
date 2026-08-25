@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#070a0c"><title>PROJECT: CASE</title>
+<style>
+:root{--bg:#070a0c;--p:#0e161a;--l:#2d414a;--t:#e6eef1;--m:#82949c;--a:#dbe8ec}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% -10%,#25343b,#0a0f12 38%,#060809 70%);color:var(--t);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+button,input,textarea{font:inherit}.app{max-width:1100px;margin:auto;padding:calc(22px + env(safe-area-inset-top)) 16px 50px}
+header{display:flex;justify-content:space-between;border-bottom:1px solid var(--l);padding-bottom:14px}.logo{font-weight:900;letter-spacing:.2em}.tiny{font-size:10px;color:var(--m);letter-spacing:.12em}
+.hero{padding:32px 0 18px}.hero h1{font-size:clamp(34px,8vw,68px);line-height:.95;margin:8px 0}.hero p{color:#a8b6bc;max-width:700px;line-height:1.55}
+.tabs{display:flex;gap:8px;overflow:auto;padding:8px 0 18px}.btn,.tabs button{background:#0d1519;color:var(--t);border:1px solid var(--l);border-radius:7px;padding:10px 13px}.tabs .on{background:#1b292f}
+.panel,.card{background:linear-gradient(#111b20,#0a1013);border:1px solid var(--l);border-radius:10px}.panel{padding:18px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:11px}.card{min-height:140px;padding:15px;position:relative}.card.open{cursor:pointer}.card.lock{opacity:.35}.card h3{font-size:15px}.status{position:absolute;bottom:13px;font-size:10px}
+.doc{white-space:pre-line;line-height:1.7}.note{width:100%;min-height:110px;background:#060a0c;color:var(--t);border:1px solid var(--l);border-radius:7px;padding:10px}
+.scene{position:relative;overflow:hidden;border:1px solid var(--l);border-radius:10px;background:#10181c;min-height:440px;touch-action:manipulation}
+.room{position:absolute;inset:0;background:linear-gradient(180deg,#293239 0 58%,#171c1f 58%);overflow:hidden}
+.wallline{position:absolute;left:0;right:0;top:58%;height:2px;background:#56636a}.table{position:absolute;left:29%;top:55%;width:43%;height:17%;background:#242a2d;border:2px solid #657179}.table:before,.table:after{content:"";position:absolute;top:100%;width:5%;height:105%;background:#30383c}.table:before{left:8%}.table:after{right:8%}
+.phone{position:absolute;left:51%;top:51%;width:7%;height:8%;border:2px solid #aab5b9;border-radius:5px;transform:rotate(-8deg)}
+.chair{position:absolute;left:21%;top:59%;width:12%;height:25%;border:4px solid #626d72;transform:rotate(23deg)}
+.cabinet{position:absolute;right:8%;top:20%;width:22%;height:39%;border:3px solid #59666c;background:#1c2428}
+.clock{position:absolute;left:13%;top:19%;width:10%;aspect-ratio:1;border:3px solid #89969b;border-radius:50%}
+.wire{position:absolute;right:27%;top:47%;width:18%;height:4px;background:#66757c;box-shadow:0 0 6px #95a6ad}
+.hotspot{position:absolute;right:25%;top:42%;width:24%;height:18%;border:0;background:transparent}.hintpulse{animation:pulse 1.5s infinite}@keyframes pulse{50%{box-shadow:inset 0 0 0 2px rgba(220,235,240,.18)}}
+.toast{position:fixed;z-index:30;left:50%;bottom:30px;transform:translateX(-50%);width:min(560px,90vw);background:#111b20;border:1px solid #78909a;padding:16px;border-radius:8px;box-shadow:0 20px 60px #000;display:none}.toast.show{display:block}.toast b{display:block;letter-spacing:.15em;margin-bottom:6px}
+.puzzle{text-align:center}.code{font-size:26px;width:150px;text-align:center;letter-spacing:.25em;background:#05090b;color:var(--t);border:1px solid var(--l);padding:12px;border-radius:7px;text-transform:uppercase}
+.boot{position:fixed;inset:0;z-index:99;background:#050708;display:grid;place-items:center;transition:.5s}.boot.off{opacity:0;pointer-events:none}.bar{width:min(460px,75vw);height:3px;background:#1a252a;margin-top:25px}.bar i{display:block;height:100%;background:#dbe8ec;animation:load 1.3s forwards}@keyframes load{from{width:0}to{width:100%}}
+@media(max-width:600px){.scene{min-height:360px}}
+
+.board{position:relative;height:620px;overflow:hidden;border:1px solid var(--l);border-radius:10px;background-image:linear-gradient(rgba(90,110,118,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(90,110,118,.08) 1px,transparent 1px);background-size:28px 28px;background-color:#090e11;touch-action:none}
+.board svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.node{position:absolute;width:150px;min-height:82px;padding:10px;background:#131e23;border:1px solid #52656e;border-radius:7px;box-shadow:0 10px 25px rgba(0,0,0,.28);touch-action:none;user-select:none}
+.node.sel{outline:2px solid #dbe8ec}.node b{display:block;font-size:12px;margin-top:5px}.node .tiny{font-size:9px}
+.boardtools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+@media(max-width:600px){.board{height:560px}.node{width:125px}}
+
+.resolvegrid{display:grid;gap:14px}.question{border:1px solid var(--l);border-radius:9px;padding:15px;background:#0c1317}.choices{display:grid;gap:7px;margin-top:10px}.choice{text-align:left}.choice.selected{background:#24353d;border-color:#8ba2ac}
+.finalseal{text-align:center;padding:35px 15px;border:1px solid var(--l);border-radius:10px;background:radial-gradient(circle,#17252b,#0a1013 70%)}.finalseal h2{font-size:clamp(28px,7vw,54px);letter-spacing:.12em}
+</style></head>
+<body>
+<div class="boot" id="boot"><div style="text-align:center"><div class="tiny">SYSTÈME D'INVESTIGATION SÉCURISÉ</div><h1 style="letter-spacing:.2em">PROJECT: CASE</h1><div class="bar"><i></i></div><p class="tiny">CHARGEMENT DU MOTEUR DE DÉCOUVERTE v0.2</p></div></div>
+<div class="toast" id="toast"><b>NOUVEL INDICE DÉCOUVERT</b><span id="toastText"></span></div>
+<div class="app"><header><div><div class="logo">PROJECT: CASE</div><div class="tiny">MOTEUR DE DÉCOUVERTE // v0.2</div></div><div class="tiny">● SYSTÈME OPÉRATIONNEL</div></header>
+<section class="hero"><div class="tiny">DOSSIER #0001 // ENQUÊTE ACTIVE</div><h1>LE DERNIER APPEL</h1><p>Une maison vide. Un appel d'urgence. Une disparition. Examinez les preuves et reconstruisez ce qui s'est réellement passé.</p></section>
+<nav class="tabs" id="tabs"></nav><main id="view"></main></div>
+<script>
+const base=[
+["EV-001","Rapport d'intervention","DOCUMENT",1,`23:17 — Appel reçu
+23:24 — Unité envoyée
+23:29 — Arrivée sur site
+
+Porte principale verrouillée. Aucun signe d'effraction.
+Porte arrière verrouillée.
+Téléphone découvert dans la salle à manger.
+Traces de boue près de l'accès arrière.
+
+NOTE : porte arrière testée depuis l'extérieur uniquement.`],
+["EV-002","Téléphone retrouvé","APPAREIL",1,`22:38 — SYSTEM EVENT
+22:51 — SYSTEM EVENT
+23:17 — SYSTEM EVENT
+23:17 — 112 — 00:11
+
+TYPE D'ÉVÉNEMENT INCONNU.`],
+["EV-003","Salle à manger","SCÈNE INTERACTIVE",1,""],
+["EV-004","Porte arrière","PHOTO DE SCÈNE",1,`Référence visible sur le mécanisme :
+DERVAUX M-72
+
+Des traces de boue sont visibles près du seuil.`],
+["EV-005","Élise Morel","DOSSIER PERSONNE",1,`ÉLISE MOREL — 31 ANS
+ARCHITECTE
+STATUT : PERSONNE DISPARUE
+
+Dernière communication connue au dossier :
+Sarah Delmas — 17:53.`],
+["EV-006","Relevé téléphonique","DOCUMENT",0,`RELEVÉ DES COMMUNICATIONS — ÉLISE MOREL
+
+17:53 — Sarah Delmas — 02:11
+18:42 — Julien Morel — 06:14
+
+DÉCLARATION DE JULIEN MOREL :
+« Je n'avais pas parlé à ma sœur depuis au moins trois semaines. »
+
+Les données opérateur contredisent cette déclaration.`],["EV-007","Témoignage Sarah","INTERROGATOIRE",0,`SARAH DELMAS — 30 ANS — JOURNALISTE
+
+« Élise était nerveuse. Elle cherchait quelque chose concernant son père. »
+
+Après confrontation :
+« Oui. C'est moi qui lui ai envoyé la photographie. Je l'avais retrouvée dans les archives d'un photographe local. Je ne voulais pas que ma source soit identifiée. »
+
+Sarah reconnaît avoir envoyé l'enveloppe anonymement.`],["EV-008","Photographie de Gabriel","PHOTO",0,`PHOTOGRAPHIE ARCHIVÉE
+
+Sujet identifié : Gabriel Morel.
+Autre personne : Thomas Vernet.
+Lieu : 17 rue des Ormes.
+
+DATE INSCRITE AU DOS :
+18 OCTOBRE 2014
+
+DATE OFFICIELLE DU DÉCÈS DE GABRIEL MOREL :
+15 OCTOBRE 2014
+
+DÉTAIL :
+un journal visible à l'arrière-plan semble également porter la date du 18 octobre.
+
+ANOMALIE MAJEURE :
+la photographie paraît avoir été prise trois jours après la mort officielle de Gabriel.`],
+["EV-009","Schéma O.R.M.E.","SCHÉMA",0,`OPERATIONAL RELAY MONITORING EMERGENCY
+
+CAPTEUR A → CAPTEUR B → CAPTEUR C → RELAIS → APPEL D'URGENCE
+
+Le dispositif déclenche automatiquement un appel d'urgence après l'activation successive des trois capteurs.
+
+CORRELATION POSSIBLE :
+22:38 / 22:51 / 23:17`],
+["EV-010","Plan électrique","PUZZLE",0,""],["EV-011","Rapport d'entretien — porte arrière","DOCUMENT",0,`RÉFÉRENCE : DERVAUX M-72
+DATE DU CONTRÔLE : 12 JUIN 2011
+
+OBSERVATIONS :
+— ressort de rappel excessivement puissant
+— fermeture brutale
+— verrouillage automatique lors de la fermeture
+— remplacement recommandé
+
+CONCLUSION :
+la porte peut être ouverte normalement depuis l'intérieur puis se verrouiller seule lorsqu'elle se referme.`],["EV-012","Données réseau — téléphone d'Élise","DONNÉES",0,`20:08 — connexion normale
+20:47 — connexion normale
+21:03 — message transmis
+21:19 — signal : -87 dBm
+21:23 — signal : -101 dBm
+21:26 — signal : -114 dBm
+21:26 — CONNEXION PERDUE
+
+Aucune extinction volontaire du téléphone n'est enregistrée.
+
+INTERPRÉTATION :
+le signal s'est progressivement dégradé avant de disparaître.`],["EV-013","Interrogatoire Thomas Vernet","INTERROGATOIRE",0,`THOMAS VERNET — 64 ANS
+ANCIEN ASSOCIÉ DE GABRIEL MOREL
+
+QUESTION :
+Êtes-vous retourné au 17 rue des Ormes après la mort de Gabriel ?
+
+RÉPONSE :
+« Non. »
+
+QUESTION :
+Jamais ?
+
+RÉPONSE :
+« Jamais. Je n'avais aucune raison d'y retourner. »
+
+OBSERVATION :
+La photographie EV-008 montre Thomas Vernet devant cette maison le 18 octobre 2014, trois jours après la mort officielle de Gabriel.`],["EV-014","Rapport d'accident — 2014","DOCUMENT",0,`DATE : 15 OCTOBRE 2014
+VÉHICULE : propriété de Gabriel Morel
+SINISTRE : sortie de route suivie d'un incendie
+
+CONDUCTEUR PRÉSUMÉ :
+Gabriel Morel
+
+ÉLÉMENTS D'IDENTIFICATION :
+— véhicule enregistré à son nom
+— documents personnels retrouvés
+— effets personnels
+— analyse médicale partielle
+
+IDENTIFICATION GÉNÉTIQUE :
+NON EFFECTUÉE
+
+CONCLUSION D'ÉPOQUE :
+identité attribuée à Gabriel Morel.
+
+REMARQUE :
+l'identification ne repose sur aucune analyse ADN concluante.`],["EV-015","Enregistrement de Gabriel","AUDIO",0,`CASSETTE MAGNÉTIQUE — ÉTIQUETTE : G.M. / 21 OCT. 2014
+
+TRANSCRIPTION :
+
+« Si quelqu'un trouve ceci, l'accident n'était pas un accident.
+
+Thomas sait ce qui s'est passé.
+
+Je ne peux pas rentrer chez moi. Pas encore.
+
+Élise... si un jour tu entends ça, ne crois pas ce qu'on t'a raconté sur ma mort. »
+
+Fin de l'enregistrement.`],["EV-016","Photographie post-accident","PHOTO",0,`PHOTOGRAPHIE — DATE ESTIMÉE : NOVEMBRE 2014
+
+Un homme ressemblant fortement à Gabriel Morel apparaît à l'arrière-plan.
+
+LIEU :
+ancienne station technique, à environ 1,8 km du 17 rue des Ormes.
+
+DÉTAIL :
+une sacoche portant les initiales G.M. est visible près de lui.`],["EV-017","Notes d'Élise","DOCUMENT",0,`NOTES MANUSCRITES — ÉLISE MOREL
+
+« Le téléphone perd le réseau quand on descend vers l'ancienne station. »
+
+« Papa n'est pas mort le 15. La photo le prouve. La cassette aussi. »
+
+« Thomas a menti. Julien savait peut-être qu'il était vivant. »
+
+« Je vais à la station ce soir. Si j'ai raison, tout a commencé là-bas. »
+
+DERNIÈRE LIGNE :
+« Ne pas prendre la voiture. Passer par le chemin derrière la maison. »`],["EV-018","Message final","MESSAGE",0,`ENREGISTREMENT — ÉLISE MOREL
+
+« Si vous écoutez ceci, alors vous avez compris.
+
+Mon père a survécu à l'accident de 2014. Thomas l'a aidé à disparaître après avoir découvert que l'accident n'était pas fortuit.
+
+Julien savait qu'il était vivant. Il a gardé le secret pour nous protéger.
+
+J'ai retrouvé la station grâce aux notes de mon père.
+
+O.R.M.E. n'était pas un piège. C'était son système d'alerte. Quand je suis entrée dans la maison, j'ai déclenché les trois capteurs sans le savoir.
+
+Je suis sortie par la porte arrière. Elle s'est verrouillée derrière moi.
+
+Je suis partie à pied vers la station.
+
+Et j'y ai trouvé mon père. »
+
+DERNIER MESSAGE :
+« Certaines disparitions sont des crimes.
+D'autres sont une façon de rester en vie. »`]];
+let S;try{S=JSON.parse(localStorage.getItem("pcase02"))||{viewed:[],notes:{},wire:false,orme:false,appelAuto:false,julienVu:false,contradiction:false}}catch(e){S={viewed:[],notes:{},wire:false,orme:false,appelAuto:false,julienVu:false,contradiction:false}}
+const save=()=>localStorage.setItem("pcase02",JSON.stringify(S));
+function unlocked(e){
+if(e[0]==="EV-010")return S.wire;
+if(e[0]==="EV-009")return S.orme;
+if(e[0]==="EV-006")return S.julienVu;
+if(e[0]==="EV-007"||e[0]==="EV-008")return S.contradiction;
+if(e[0]==="EV-013"||e[0]==="EV-014")return S.viewed.includes("EV-008");
+if(e[0]==="EV-011"||e[0]==="EV-012")return !!S.gabrielHyp;
+if(e[0]==="EV-015")return !!S.exitDeduction;
+if(e[0]==="EV-016")return S.viewed.includes("EV-015");
+if(e[0]==="EV-017")return S.viewed.includes("EV-016");
+if(e[0]==="EV-018")return !!S.caseSolved;
+return !!e[3]}
+let tab="SYNTHÈSE";
+function tabs(){document.querySelector("#tabs").innerHTML=["SYNTHÈSE","PERSONNES","CHRONOLOGIE","TABLEAU","PIÈCES À CONVICTION","RÉSOLUTION","NOTES"].map(x=>`<button class="${tab===x?"on":""}" onclick="go('${x}')">${x}</button>`).join("")}
+function go(x){tab=x;tabs();x==="SYNTHÈSE"?overview():x==="PERSONNES"?people():x==="CHRONOLOGIE"?timeline():x==="TABLEAU"?board():x==="PIÈCES À CONVICTION"?db():x==="RÉSOLUTION"?resolution():notes()}
+function overview(){let u=base.filter(unlocked).length;document.querySelector("#view").innerHTML=`<section class="panel"><div class="tiny">ÉTAT DU DOSSIER</div><h2>ENQUÊTE ACTIVE</h2><p class="doc">${u} / 18 PIÈCES À CONVICTION DISPONIBLE
+${S.viewed.length} ANALYSÉES
+${S.orme?1:0} / 3 ÉNIGMES RÉSOLUES</p><button class="btn" onclick="go('PIÈCES À CONVICTION')">OUVRIR PIÈCES À CONVICTION PIÈCES À CONVICTION</button></section>`}
+function db(){document.querySelector("#view").innerHTML=`<section class="grid">${base.map(e=>{let u=unlocked(e);return `<article class="card ${u?"open":"lock"}" ${u?`onclick="openEv('${e[0]}')"`:""}><div class="tiny">${e[0]} // ${e[2]}</div><h3>${u?e[1]:"████████████"}</h3><div class="status">${u?(S.viewed.includes(e[0])?"● ANALYSÉES":"● DISPONIBLE"):"🔒 VERROUILLÉE"}</div></article>`}).join("")}</section>`}
+function openEv(id){let e=base.find(x=>x[0]===id);if(!S.viewed.includes(id)){S.viewed.push(id);save()}if(id==="EV-003")return scene();if(id==="EV-010")return puzzle();if(id==="EV-009")return ormeEvidence();if(id==="EV-006")return phoneEvidence();if(id==="EV-013"||id==="EV-014")return gabrielEvidence(id);if(id==="EV-011"||id==="EV-012")return eliseEvidence(id);if(id==="EV-015"||id==="EV-016"||id==="EV-017")return finalBranch(id);if(id==="EV-018")return finalMessage();document.querySelector("#view").innerHTML=`<button class="btn" onclick="go('PIÈCES À CONVICTION')">← PIÈCES À CONVICTION</button><section class="panel" style="margin-top:12px"><div class="tiny">${e[0]} // ${e[2]}</div><h2>${e[1]}</h2><div class="doc">${e[4]}</div><hr style="border:0;border-top:1px solid var(--l);margin:22px 0"><div class="tiny">NOTE DE L'ENQUÊTEUR</div><textarea class="note" oninput="setNote('${id}',this.value)">${esc(S.notes[id]||"")}</textarea></section>`}
+function scene(){document.querySelector("#view").innerHTML=`<button class="btn" onclick="go('PIÈCES À CONVICTION')">← PIÈCES À CONVICTION</button><section class="panel" style="margin-top:12px"><div class="tiny">EV-003 // SCÈNE INTERACTIVE</div><h2>SALLE À MANGER</h2><p class="tiny">TOUCHEZ LES ÉLÉMENTS QUI VOUS SEMBLENT ANORMAUX.</p><div class="scene"><div class="room"><div class="wallline"></div><div class="clock"></div><div class="cabinet"></div><div class="wire"></div><div class="table"></div><div class="phone"></div><div class="chair"></div><button aria-label="inspecter le câblage" class="hotspot ${S.wire?"":"hintpulse"}" onclick="findWire()"></button></div></div>${S.wire?`<div class="alert"><b>INDICE ENREGISTRÉ :</b> CÂBLAGE INCONNU — EV-010 UNLOCKED</div>`:""}</section>`}
+function findWire(){if(!S.wire){S.wire=true;save();toast("CÂBLAGE INCONNU // Une ligne non répertoriée disparaît derrière l'armoire. EV-010 débloquée.");setTimeout(scene,1800)}}
+function puzzle(){document.querySelector("#view").innerHTML=`<button class="btn" onclick="go('PIÈCES À CONVICTION')">← PIÈCES À CONVICTION</button><section class="panel puzzle" style="margin-top:12px"><div class="tiny">EV-010 // PLAN ÉLECTRIQUE</div><h2>ANCIEN PLAN ÉLECTRIQUE</h2><p class="doc">Quatre annotations manuscrites apparaissent près des relais :
+
+15 — 18 — 13 — 5
+
+Une note : « NOM DU SYSTÈME »</p><input id="code" class="code" maxlength="4" autocomplete="off"><br><br><button class="btn" onclick="solve()">VALIDER</button><p id="result" class="tiny"></p></section>`}
+function solve(){let v=document.querySelector("#code").value.trim().toUpperCase();if(v==="ORME"){S.orme=true;save();document.querySelector("#result").textContent="ACCÈS AUTORISÉ // EV-009 UNLOCKED";toast("ÉNIGME RÉSOLUE // O.R.M.E. identifié. Schéma EV-009 disponible.")}else document.querySelector("#result").textContent="ACCÈS REFUSÉ // IDENTIFIANT INCORRECT"}
+function toast(t){document.querySelector("#toastText").textContent=t;let q=document.querySelector("#toast");q.classList.add("show");setTimeout(()=>q.classList.remove("show"),3000)}
+
+function people(){
+document.querySelector("#view").innerHTML=`<section class="grid">
+<article class="card open" onclick="personElise()"><div class="tiny">PERSONNE // DISPARUE</div><h3>Élise Morel</h3><p class="tiny">31 ans — Architecte</p><div class="status">● DOSSIER ACTIF</div></article>
+<article class="card open" onclick="personJulien()"><div class="tiny">PERSONNE // TÉMOIN</div><h3>Julien Morel</h3><p class="tiny">35 ans — Frère d'Élise</p><div class="status">${S.contradiction?"⚠ PERSONNE D'INTÉRÊT":"● TÉMOIN"}</div></article>
+<article class="card ${S.contradiction?"open":"lock"}" ${S.contradiction?'onclick="personSarah()"':""}><div class="tiny">PERSONNE // JOURNALISTE</div><h3>${S.contradiction?"Sarah Delmas":"████████"}</h3><div class="status">${S.contradiction?"● TÉMOIN":"🔒 DOSSIER VERROUILLÉ"}</div></article>
+<article class="card ${S.viewed.includes("EV-008")?"open":"lock"}" ${S.viewed.includes("EV-008")?'onclick="personThomas()"':""}><div class="tiny">PERSONNE // ANCIEN ASSOCIÉ</div><h3>${S.viewed.includes("EV-008")?"Thomas Vernet":"████████"}</h3><div class="status">${S.viewed.includes("EV-008")?"● PERSONNE D'INTÉRÊT":"🔒 DOSSIER VERROUILLÉ"}</div></article>
+</section>`}
+
+
+function board(){
+if(!S.board){
+S.board={nodes:[
+{id:"P-ELISE",label:"Élise Morel",kind:"PERSONNE",x:7,y:12},
+{id:"P-JULIEN",label:"Julien Morel",kind:"PERSONNE",x:68,y:12},
+{id:"EV-002",label:"Téléphone",kind:"PREUVE",x:8,y:68},
+{id:"EV-009",label:"O.R.M.E.",kind:"PREUVE",x:67,y:68}
+],links:[]};save()}
+let avail=S.board.nodes.filter(n=>n.id!=="EV-009"||S.orme);
+document.querySelector("#view").innerHTML=`<div class="boardtools"><button class="btn" onclick="addBoardEvidence()">+ AJOUTER UNE PREUVE</button><button class="btn" onclick="addHypothesis()">+ HYPOTHÈSE</button><button class="btn" onclick="linkMode()">RELIER 2 ÉLÉMENTS</button><button class="btn" onclick="clearLinks()">EFFACER LES LIENS</button></div><div class="tiny" style="margin-bottom:10px">DÉPLACEZ LES CARTES. POUR CRÉER UN LIEN, APPUYEZ SUR « RELIER », PUIS SUR DEUX CARTES.</div><div class="board" id="board"><svg id="wires"></svg>${avail.map(n=>`<div class="node" id="node-${n.id}" data-id="${n.id}" style="left:${n.x}%;top:${n.y}%"><span class="tiny">${n.kind}</span><b>${n.label}</b></div>`).join("")}</div>`;
+initBoard()}
+let linking=false,firstLink=null;
+function initBoard(){
+const b=document.querySelector("#board"); if(!b)return;
+b.querySelectorAll(".node").forEach(el=>{
+let sx,sy,ox,oy,moved=false;
+el.addEventListener("pointerdown",ev=>{el.setPointerCapture(ev.pointerId);sx=ev.clientX;sy=ev.clientY;ox=el.offsetLeft;oy=el.offsetTop;moved=false});
+el.addEventListener("pointermove",ev=>{if(!el.hasPointerCapture(ev.pointerId))return;let dx=ev.clientX-sx,dy=ev.clientY-sy;if(Math.abs(dx)+Math.abs(dy)>4)moved=true;let x=Math.max(0,Math.min(b.clientWidth-el.offsetWidth,ox+dx));let y=Math.max(0,Math.min(b.clientHeight-el.offsetHeight,oy+dy));el.style.left=x+"px";el.style.top=y+"px";drawLinks()});
+el.addEventListener("pointerup",ev=>{let n=S.board.nodes.find(n=>n.id===el.dataset.id);n.x=100*el.offsetLeft/b.clientWidth;n.y=100*el.offsetTop/b.clientHeight;save();if(linking&&!moved)selectLink(el)});
+});drawLinks()}
+function linkMode(){linking=true;firstLink=null;toast("MODE CONNEXION // Sélectionnez deux éléments du tableau.")}
+function selectLink(el){if(!firstLink){firstLink=el.dataset.id;el.classList.add("sel");return}let a=firstLink,b=el.dataset.id;if(a!==b&&!S.board.links.some(l=>(l[0]===a&&l[1]===b)||(l[0]===b&&l[1]===a))){let rel=prompt("Nature de la relation :\nconnaît / contredit / appartient à / lié à / présent à / suspecté de","lié à")||"lié à";S.board.links.push([a,b,rel]);checkDeduction(a,b,rel)}linking=false;firstLink=null;save();board()}
+function drawLinks(){let svg=document.querySelector("#wires"),bd=document.querySelector("#board");if(!svg||!bd)return;svg.innerHTML="";S.board.links.forEach(l=>{let a=document.getElementById("node-"+l[0]),b=document.getElementById("node-"+l[1]);if(!a||!b)return;let x1=a.offsetLeft+a.offsetWidth/2,y1=a.offsetTop+a.offsetHeight/2,x2=b.offsetLeft+b.offsetWidth/2,y2=b.offsetTop+b.offsetHeight/2;svg.innerHTML+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#91a6af" stroke-width="2" stroke-dasharray="5 4"/><text x="${(x1+x2)/2}" y="${(y1+y2)/2-5}" fill="#cbd9de" font-size="10" text-anchor="middle">${l[2]||"lié à"}</text>`})}
+
+function addHypothesis(){
+let text=prompt("Votre hypothèse :");
+if(!text||!text.trim())return;
+let id="H-"+Date.now();
+S.board.nodes.push({id:id,label:text.trim(),kind:"HYPOTHÈSE",x:38,y:38});
+save();board();toast("HYPOTHÈSE AJOUTÉE // Reliez-la aux éléments qui la soutiennent ou la contredisent.")}
+function checkDeduction(a,b,rel){
+let pair=[a,b];
+if(pair.includes("EV-002")&&pair.includes("EV-009")&&S.orme&&!S.appelAuto){
+S.appelAuto=true;save();setTimeout(()=>toast("DÉDUCTION DÉCOUVERTE // Les événements O.R.M.E. correspondent au journal du téléphone : l'appel de 23:17 a pu être automatique."),250)}
+if(pair.includes("P-JULIEN")&&pair.includes("EV-006")&&!S.contradiction){
+S.contradiction=true;save();setTimeout(()=>toast("CONTRADICTION DÉCOUVERTE // Le relevé téléphonique contredit la déclaration de Julien."),250)}
+}
+
+function clearLinks(){S.board.links=[];save();board()}
+function addBoardEvidence(){
+let candidates=base.filter(e=>unlocked(e)&&!S.board.nodes.some(n=>n.id===e[0]));
+if(!candidates.length){toast("TABLEAU // Toutes les preuves disponibles sont déjà ajoutées.");return}
+let e=candidates[0];S.board.nodes.push({id:e[0],label:e[1],kind:"PREUVE",x:38,y:40});save();board();toast("TABLEAU MIS À JOUR // "+e[0]+" ajoutée.")}
+
+function timeline(){
+let events=[
+["17:53","Sarah Delmas communique avec Élise.","CONFIRMÉ"],
+["18:42","Appel Élise → Julien — 6 min 14.",S.contradiction?"CONFIRMÉ":"VERROUILLÉ"],
+["19:11","Élise quitte son appartement.","CONFIRMÉ"],
+["20:06","Arrivée estimée rue des Ormes.","ESTIMÉ"],
+["21:26","Dernière connexion réseau du téléphone d'Élise.",S.viewed.includes("EV-012")?"SIGNAL PERDU":"À ANALYSER"],
+["22:56","Sortie possible d'Élise par la porte arrière.",S.exitDeduction?"HYPOTHÈSE FORTE":"NON ÉTABLI"],
+["23:00","Déplacement possible vers l'ancienne station technique.",S.stationDeduction?"DESTINATION PROBABLE":"NON ÉTABLI"],
+["22:38","Premier événement système O.R.M.E.",S.orme?"CONFIRMÉ":"VERROUILLÉ"],
+["22:51","Deuxième événement système O.R.M.E.",S.orme?"CONFIRMÉ":"VERROUILLÉ"],
+["23:17","Troisième événement système puis appel au 112.",S.appelAuto?"APPEL AUTOMATIQUE":"À ANALYSER"],
+["23:29","Arrivée de la patrouille. Maison vide.","CONFIRMÉ"]
+];
+document.querySelector("#view").innerHTML=`<section class="panel"><div class="tiny">RECONSTRUCTION TEMPORELLE</div><h2>CHRONOLOGIE DU 14 OCTOBRE</h2>${events.map(e=>`<div style="display:grid;grid-template-columns:70px 1fr auto;gap:12px;padding:14px 0;border-bottom:1px solid var(--l)"><b>${e[0]}</b><span>${e[1]}</span><span class="tiny">${e[2]}</span></div>`).join("")}</section>`}
+function personSarah(){
+document.querySelector("#view").innerHTML=`<button class="btn" onclick="go('PERSONNES')">← PERSONNES</button><section class="panel" style="margin-top:12px"><div class="tiny">DOSSIER PERSONNE</div><h2>SARAH DELMAS</h2><p class="doc">30 ans — Journaliste locale
+
+STATUT : TÉMOIN
+
+Dernière personne connue à avoir vu Élise avant sa disparition.
+
+Sarah affirme qu'Élise enquêtait sur son père et semblait particulièrement nerveuse.
+
+Deux nouvelles pièces sont maintenant accessibles :
+EV-007 — Témoignage Sarah
+EV-008 — Photographie de Gabriel</p></section>`}
+
+
+function personThomas(){
+document.querySelector("#view").innerHTML=`<button class="btn" onclick="go('PERSONNES')">← PERSONNES</button><section class="panel" style="margin-top:12px"><div class="tiny">DOSSIER PERSONNE</div><h2>THOMAS VERNET</h2><p class="doc">64 ans — Ingénieur à la retraite
+Ancien associé de Gabriel Morel.
+
+STATUT : PERSONNE D'INTÉRÊT
+
+Thomas affirme ne jamais être retourné au 17 rue des Ormes après la mort de Gabriel.
+
+La photographie EV-008 semble pourtant prouver le contraire.
+
+NOUVELLES PIÈCES DISPONIBLES :
+EV-013 — Interrogatoire Thomas Vernet
+EV-014 — Rapport d'accident 2014</p></section>`}
+
+function personElise(){document.querySelector("#view").innerHTML=`<button class="btn" onclick="go('PERSONNES')">← PERSONNES</button><section class="panel" style="margin-top:12px"><div class="tiny">DOSSIER PERSONNE</div><h2>ÉLISE MOREL</h2><p class="doc">31 ans — Architecte
+STATUT : PERSONNE DISPARUE
+
+Dernière communication connue au dossier initial :
+Sarah Delmas — 17:53.</p></section>`}
+function personJulien(){
+S.julienVu=true;save();
+document.querySelector("#view").innerHTML=`<button class="btn" onclick="go('PERSONNES')">← PERSONNES</button><section class="panel" style="margin-top:12px"><div class="tiny">DOSSIER PERSONNE</div><h2>JULIEN MOREL</h2><p class="doc">35 ans — Frère d'Élise
+
+STATUT : ${S.contradiction?"⚠ PERSONNE D'INTÉRÊT":"TÉMOIN"}
+
+DÉCLARATION :
+« Je n'avais pas parlé à ma sœur depuis au moins trois semaines. »
+
+La consultation de ce témoignage rend disponible le relevé téléphonique EV-006.</p><div class="alert">BASE DE DONNÉES MISE À JOUR — EV-006 DISPONIBLE</div></section>`}
+function ormeEvidence(){
+document.querySelector("#view").innerHTML=`<button class="btn" onclick="go('PIÈCES À CONVICTION')">← PIÈCES À CONVICTION</button><section class="panel" style="margin-top:12px"><div class="tiny">EV-009 // SCHÉMA</div><h2>SCHÉMA O.R.M.E.</h2><p class="doc">OPERATIONAL RELAY MONITORING EMERGENCY
+
+CAPTEUR A → CAPTEUR B → CAPTEUR C → RELAIS → APPEL D'URGENCE
+
+Le dispositif déclenche automatiquement un appel d'urgence après l'activation successive des trois capteurs.
+
+ÉVÉNEMENTS DU TÉLÉPHONE :
+22:38 — ÉVÉNEMENT SYSTÈME
+22:51 — ÉVÉNEMENT SYSTÈME
+23:17 — ÉVÉNEMENT SYSTÈME
+23:17 — APPEL 112</p>${S.appelAuto?`<div class="alert"><b>DÉDUCTION VALIDÉE :</b> l'appel de 23:17 a été déclenché automatiquement.</div>`:`<p class="tiny">QUE PEUT-ON DÉDUIRE DE CES DONNÉES ?</p><button class="btn" onclick="deduceCall()">L'APPEL ÉTAIT AUTOMATIQUE</button>`}</section>`}
+function deduceCall(){S.appelAuto=true;save();toast("DÉDUCTION VALIDÉE // Personne n'a nécessairement composé le 112. O.R.M.E. a pu déclencher l'appel.");setTimeout(ormeEvidence,1200)}
+
+
+
+
+function resolution(){
+if(!S.stationDeduction){
+document.querySelector("#view").innerHTML=`<section class="panel"><h2>RÉSOLUTION VERROUILLÉE</h2><p class="doc">L'enquête n'est pas suffisamment avancée pour formuler une conclusion.</p></section>`;return}
+if(!S.answers)S.answers={};
+let qs=[
+["q1","Que révèle O.R.M.E. ?",["Quelqu'un a appelé manuellement le 112","Le système pouvait déclencher automatiquement l'appel","Le téléphone d'Élise était piraté"],1],
+["q2","Comment Élise a-t-elle pu quitter une maison retrouvée verrouillée ?",["Par une fenêtre","Elle n'a jamais quitté la maison","La porte arrière se verrouille automatiquement"],2],
+["q3","Que peut-on conclure sur la mort de Gabriel en 2014 ?",["Son identité n'a jamais été établie de façon génétique","Sa mort est absolument certaine","Thomas est mort à sa place"],0],
+["q4","Où Élise s'est-elle probablement rendue ?",["À son appartement","À l'ancienne station technique","Chez Julien"],1],
+["q5","Quelle affirmation est contredite par les données ?",["Sarah n'a jamais parlé à Élise","Julien n'avait pas parlé à Élise depuis trois semaines","Élise ne connaissait pas Thomas"],1]
+];
+document.querySelector("#view").innerHTML=`<section class="panel"><div class="tiny">PROTOCOLE DE CLÔTURE // DOSSIER #0001</div><h2>FORMULER LA THÉORIE FINALE</h2><p class="doc">Répondez à partir des éléments du dossier. Une conclusion incohérente ne permettra pas l'ouverture d'EV-018.</p><div class="resolvegrid">${qs.map(q=>`<div class="question"><b>${q[1]}</b><div class="choices">${q[2].map((c,i)=>`<button class="btn choice ${S.answers[q[0]]===i?"selected":""}" onclick="answer('${q[0]}',${i})">${c}</button>`).join("")}</div></div>`).join("")}</div><br><button class="btn" onclick="submitResolution()">SOUMETTRE LA THÉORIE</button><p id="resolutionResult" class="tiny"></p></section>`}
+function answer(q,i){S.answers[q]=i;save();resolution()}
+function submitResolution(){
+let correct={q1:1,q2:2,q3:0,q4:1,q5:1};
+let keys=Object.keys(correct);let score=keys.filter(k=>S.answers&&S.answers[k]===correct[k]).length;
+if(score===5){S.caseSolved=true;save();toast("DOSSIER RÉSOLU // Autorisation exceptionnelle accordée : EV-018 déverrouillée.");setTimeout(finalSolved,1300)}
+else{document.querySelector("#resolutionResult").textContent=`THÉORIE INSUFFISANTE // ${score}/5 déductions cohérentes. Réexaminez le dossier.`}}
+function finalSolved(){
+document.querySelector("#view").innerHTML=`<section class="finalseal"><div class="tiny">PROJECT: CASE // DOSSIER #0001</div><h2>AFFAIRE RÉSOLUE</h2><p class="doc">Votre théorie est compatible avec les éléments établis.
+
+NIVEAU D'AUTORISATION AUGMENTÉ
+EV-018 // MESSAGE FINAL // DÉVERROUILLÉ</p><button class="btn" onclick="openEv('EV-018')">OUVRIR EV-018</button></section>`}
+function finalMessage(){
+let e=base.find(x=>x[0]==="EV-018");if(!S.viewed.includes("EV-018"))S.viewed.push("EV-018");save();
+document.querySelector("#view").innerHTML=`<button class="btn" onclick="go('PIÈCES À CONVICTION')">← PIÈCES À CONVICTION</button><section class="panel" style="margin-top:12px"><div class="tiny">EV-018 // MESSAGE FINAL</div><h2>ENREGISTREMENT D'ÉLISE</h2><p class="doc">${e[4]}</p><hr style="border:0;border-top:1px solid var(--l);margin:25px 0"><div class="finalseal"><div class="tiny">DOSSIER #0001</div><h2>CLOS</h2><p class="tiny">LE DERNIER APPEL // ENQUÊTE TERMINÉE</p></div></section>`}
+
+function finalBranch(id){
+let e=base.find(x=>x[0]===id);if(!S.viewed.includes(id))S.viewed.push(id);save();
+let next=id==="EV-015"?"EV-016":id==="EV-016"?"EV-017":null;
+document.querySelector("#view").innerHTML=`<button class="btn" onclick="go('PIÈCES À CONVICTION')">← PIÈCES À CONVICTION</button><section class="panel" style="margin-top:12px"><div class="tiny">${e[0]} // ${e[2]}</div><h2>${e[1]}</h2><p class="doc">${e[4]}</p>${next?`<div class="alert"><b>NOUVELLE PISTE</b><br>${next} est désormais accessible.</div>`:""}${id==="EV-017"&&!S.stationDeduction?`<button class="btn" onclick="deduceStation()">DÉTERMINER LA DESTINATION D'ÉLISE</button>`:""}${S.stationDeduction?`<div class="alert"><b>✓ DESTINATION PROBABLE</b><br>Ancienne station technique — environ 1,8 km derrière la maison.</div>`:""}</section>`}
+function deduceStation(){
+S.stationDeduction=true;
+if(!S.board)S.board={nodes:[],links:[]};
+if(!S.board.nodes.some(n=>n.id==="L-STATION"))S.board.nodes.push({id:"L-STATION",label:"Ancienne station technique",kind:"LIEU",x:45,y:45});
+save();toast("NOUVELLE DESTINATION // Les notes d'Élise et la perte du signal convergent vers l'ancienne station technique.");setTimeout(()=>finalBranch("EV-017"),1200)}
+
+function eliseEvidence(id){
+let e=base.find(x=>x[0]===id);if(!S.viewed.includes(id))S.viewed.push(id);save();
+let both=S.viewed.includes("EV-011")&&S.viewed.includes("EV-004");
+document.querySelector("#view").innerHTML=`<button class="btn" onclick="go('PIÈCES À CONVICTION')">← PIÈCES À CONVICTION</button><section class="panel" style="margin-top:12px"><div class="tiny">${e[0]} // ${e[2]}</div><h2>${e[1]}</h2><p class="doc">${e[4]}</p>${id==="EV-011"?`<div class="alert"><b>RAPPROCHEMENT POSSIBLE</b><br>La référence DERVAUX M-72 correspond à celle visible sur EV-004.</div>`:""}${both&&!S.exitDeduction?`<button class="btn" onclick="deduceExit()">FORMULER UNE DÉDUCTION SUR LA SORTIE</button>`:""}${S.exitDeduction?`<div class="alert"><b>✓ DÉDUCTION VALIDÉE</b><br>Une porte retrouvée verrouillée ne prouve pas qu'Élise n'est pas sortie par cette porte.</div>`:""}</section>`}
+function deduceExit(){
+S.exitDeduction=true;
+if(!S.board)S.board={nodes:[],links:[]};
+if(!S.board.nodes.some(n=>n.id==="D-SORTIE"))S.board.nodes.push({id:"D-SORTIE",label:"Élise a pu sortir par la porte arrière",kind:"DÉDUCTION",x:42,y:42});
+save();toast("DÉDUCTION DÉCOUVERTE // La Dervaux M-72 se verrouille automatiquement après fermeture.");setTimeout(()=>eliseEvidence("EV-011"),1200)}
+
+function gabrielEvidence(id){
+let e=base.find(x=>x[0]===id);if(!S.viewed.includes(id))S.viewed.push(id);save();
+let extra=id==="EV-013"?`<div class="alert"><b>⚠ CONTRADICTION MAJEURE</b><br>Thomas affirme n'être jamais revenu dans la maison. EV-008 le situe devant celle-ci le 18 octobre 2014.</div>`:`<div class="alert"><b>POINT À VÉRIFIER</b><br>La mort de Gabriel a été attribuée sans identification génétique.</div>`;
+document.querySelector("#view").innerHTML=`<button class="btn" onclick="go('PIÈCES À CONVICTION')">← PIÈCES À CONVICTION</button><section class="panel" style="margin-top:12px"><div class="tiny">${e[0]} // ${e[2]}</div><h2>${e[1]}</h2><p class="doc">${e[4]}</p>${extra}${S.viewed.includes("EV-013")&&S.viewed.includes("EV-014")?`<button class="btn" onclick="gabrielHypothesis()">FORMULER UNE HYPOTHÈSE</button>`:""}</section>`}
+function gabrielHypothesis(){
+if(!S.board)S.board={nodes:[],links:[]};
+if(!S.board.nodes.some(n=>n.id==="H-GABRIEL"))S.board.nodes.push({id:"H-GABRIEL",label:"Gabriel n'est peut-être pas mort en 2014",kind:"HYPOTHÈSE",x:38,y:38});
+S.gabrielHyp=true;save();toast("HYPOTHÈSE ENREGISTRÉE // La mort de Gabriel Morel n'est plus considérée comme certaine.");}
+
+function phoneEvidence(){
+let e=base.find(x=>x[0]==="EV-006");
+if(!S.viewed.includes("EV-006"))S.viewed.push("EV-006");
+S.contradiction=true;save();
+document.querySelector("#view").innerHTML=`<button class="btn" onclick="go('PIÈCES À CONVICTION')">← PIÈCES À CONVICTION</button><section class="panel" style="margin-top:12px"><div class="tiny">EV-006 // DOCUMENT</div><h2>RELEVÉ TÉLÉPHONIQUE</h2><p class="doc">${e[4]}</p><div class="alert"><b>⚠ CONTRADICTION DÉTECTÉE</b><br>Julien affirme ne pas avoir parlé à Élise depuis trois semaines. Le relevé indique un appel de 6 min 14 à 18:42.</div><p class="tiny">STATUT DE JULIEN MOREL MIS À JOUR : PERSONNE D'INTÉRÊT</p></section>`}
+
+function setNote(id,v){S.notes[id]=v;save()}function esc(s){return s.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")}
+function notes(){let a=Object.entries(S.notes).filter(x=>x[1].trim());document.querySelector("#view").innerHTML=a.length?`<section class="grid">${a.map(([id,t])=>`<article class="card"><div class="tiny">${id}</div><p class="doc">${esc(t)}</p></article>`).join("")}</section>`:`<section class="panel"><h2>AUCUNE NOTE ENREGISTRÉE</h2></section>`}
+tabs();overview();setTimeout(()=>document.querySelector("#boot").classList.add("off"),1600);
+</script></body></html>
