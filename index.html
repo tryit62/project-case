@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#070a0c">
+<title>PROJECT: CASE</title>
+<style>
+:root{--bg:#070a0c;--panel:#0d1418;--panel2:#111b20;--line:#2a3b43;--txt:#e7eef1;--muted:#82939b;--hot:#d9e5e9}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--txt)}
+body{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;background:radial-gradient(circle at 50% -15%,#233138 0,#0c1215 31%,#070a0c 62%);min-height:100vh}
+button,textarea{font:inherit}.app{max-width:1100px;margin:auto;padding:calc(22px + env(safe-area-inset-top)) 18px calc(40px + env(safe-area-inset-bottom))}
+header{display:flex;justify-content:space-between;align-items:center;gap:14px;padding-bottom:15px;border-bottom:1px solid var(--line)}
+.logo{font-weight:900;letter-spacing:.22em}.tiny{font-size:11px;color:var(--muted);letter-spacing:.12em}.online{border:1px solid var(--line);padding:7px 10px;border-radius:99px;font-size:10px}
+.hero{padding:38px 0 22px}.hero h1{font-size:clamp(34px,8vw,72px);line-height:.95;margin:10px 0 14px}.hero p{max-width:720px;color:#aab8be;line-height:1.6}
+.tabs{display:flex;gap:8px;overflow:auto;padding:8px 0 20px}.tabs button,.btn{border:1px solid var(--line);background:#0e161a;color:var(--txt);padding:11px 14px;border-radius:7px}.tabs button.active{background:#1b292f}
+.panel,.card{background:linear-gradient(180deg,rgba(18,28,33,.94),rgba(10,15,18,.96));border:1px solid var(--line);border-radius:10px}
+.panel{padding:20px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.card{padding:16px;min-height:145px;position:relative}
+.card.available{cursor:pointer}.card.locked{opacity:.38}.card h3{margin:10px 0;font-size:16px}.status{position:absolute;left:16px;bottom:14px;font-size:10px;letter-spacing:.1em}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:20px 0}.stat{border:1px solid var(--line);border-radius:8px;padding:14px}.stat strong{font-size:24px;display:block;margin-bottom:4px}
+.document{white-space:pre-line;line-height:1.75;color:#d5dfe3}.note{width:100%;min-height:130px;resize:vertical;background:#070c0e;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:12px;margin-top:10px}.rule{border:0;border-top:1px solid var(--line);margin:24px 0}
+.boot{position:fixed;z-index:99;inset:0;background:#050708;display:grid;place-items:center;transition:opacity .6s}.boot.done{opacity:0;pointer-events:none}.bootbox{text-align:center;width:min(520px,82vw)}.bootbox h1{letter-spacing:.25em;font-size:clamp(25px,6vw,44px)}.progress{height:3px;background:#1b282e;margin:28px 0 12px;overflow:hidden}.progress span{display:block;height:100%;background:#dbe7ea;width:0;animation:load 1.5s ease forwards}@keyframes load{to{width:100%}}
+.alert{border-left:3px solid #a8b9c0;padding:12px 14px;background:#10191d;margin:16px 0}
+@media(max-width:620px){.stats{grid-template-columns:1fr}.hero{padding-top:28px}.app{padding-left:14px;padding-right:14px}}
+</style>
+</head>
+<body>
+<div class="boot" id="boot"><div class="bootbox"><div class="tiny">SECURE INVESTIGATION SYSTEM</div><h1>PROJECT: CASE</h1><div class="progress"><span></span></div><div class="tiny">INITIALIZING CASEFILE...</div></div></div>
+<div class="app">
+<header><div><div class="logo">PROJECT: CASE</div><div class="tiny">SECURE CASE MANAGEMENT</div></div><div class="online">● SYSTEM ONLINE</div></header>
+<section class="hero"><div class="tiny">ACTIVE INVESTIGATION // CASE #0001</div><h1>LE DERNIER<br>APPEL</h1><p>À 23 h 17, un appel au 112 provient d'une maison abandonnée depuis douze ans. À l'arrivée de la police, la maison est vide. Élise Morel a disparu.</p></section>
+<div class="tabs" id="tabs"></div>
+<main id="view"></main>
+</div>
+<script>
+const evidence=[
+{id:"EV-001",title:"Rapport d'intervention",type:"DOCUMENT",open:1,body:`14 OCTOBRE
+
+23:17 — Appel reçu
+23:24 — Unité envoyée
+23:29 — Arrivée sur site
+
+Porte principale verrouillée.
+Aucun signe d'effraction.
+Porte arrière verrouillée.
+Une chaise renversée dans la salle à manger.
+Téléphone portable découvert sur la table.
+Présence de traces de boue près de l'accès arrière.
+Aucun occupant découvert.
+
+NOTE TECHNIQUE
+Porte arrière testée depuis l'extérieur uniquement.`},
+{id:"EV-002",title:"Téléphone retrouvé",type:"DEVICE",open:1,body:`JOURNAL SYSTÈME
+
+22:38 — SYSTEM EVENT
+22:51 — SYSTEM EVENT
+23:17 — SYSTEM EVENT
+23:17 — 112 — 00:11
+
+Les trois événements précédant l'appel sont classés UNKNOWN EVENT TYPE.`},
+{id:"EV-003",title:"Salle à manger",type:"SCENE PHOTO",open:1,body:`PHOTOGRAPHIE DE SCÈNE
+
+Table.
+Téléphone.
+Chaise renversée.
+Vieille armoire.
+Câblage mural.
+Horloge arrêtée.
+
+Une partie du câblage semble disparaître derrière l'armoire.
+
+[La recherche interactive dans cette photographie arrivera avec le Discovery Engine v0.2.]`},
+{id:"EV-004",title:"Porte arrière",type:"SCENE PHOTO",open:1,body:`PHOTOGRAPHIE DE SCÈNE
+
+Traces de boue devant l'accès arrière.
+Poignée ancienne.
+Serrure mécanique.
+
+Une référence est visible sur le mécanisme :
+
+DERVAUX M-72`},
+{id:"EV-005",title:"Élise Morel",type:"PERSON FILE",open:1,body:`ÉLISE MOREL
+31 ANS
+ARCHITECTE
+
+STATUT : PERSONNE DISPARUE
+
+Dernière apparition connue :
+sortie de son appartement.
+
+Dernière communication connue au dossier :
+Sarah Delmas — 17:53.
+
+Son véhicule sera retrouvé à quelques kilomètres du 17 rue des Ormes.`},
+{id:"EV-006",title:"Relevé téléphonique",type:"DOCUMENT"},
+{id:"EV-007",title:"Témoignage Sarah",type:"INTERVIEW"},
+{id:"EV-008",title:"Photographie de Gabriel",type:"PHOTO"},
+{id:"EV-009",title:"Schéma O.R.M.E.",type:"SCHEMATIC"},
+{id:"EV-010",title:"Plan électrique",type:"PLAN"},
+{id:"EV-011",title:"Rapport serrure",type:"DOCUMENT"},
+{id:"EV-012",title:"Données réseau Élise",type:"DATA"},
+{id:"EV-013",title:"Témoignage Thomas",type:"INTERVIEW"},
+{id:"EV-014",title:"Rapport accident 2014",type:"DOCUMENT"},
+{id:"EV-015",title:"Cassette Gabriel",type:"AUDIO"},
+{id:"EV-016",title:"Photo post-accident",type:"PHOTO"},
+{id:"EV-017",title:"Notes d'Élise",type:"DOCUMENT"},
+{id:"EV-018",title:"Message final",type:"MESSAGE"}];
+let state;
+try{state=JSON.parse(localStorage.getItem("project-case-0001"))||{viewed:[],notes:{}}}catch(e){state={viewed:[],notes:{}}}
+function save(){localStorage.setItem("project-case-0001",JSON.stringify(state))}
+let tab="OVERVIEW";
+function renderTabs(){document.getElementById("tabs").innerHTML=["OVERVIEW","EVIDENCE","NOTES"].map(x=>`<button class="${tab===x?"active":""}" onclick="go('${x}')">${x}</button>`).join("")}
+function go(x){tab=x;renderTabs();if(x==="OVERVIEW")overview();if(x==="EVIDENCE")database();if(x==="NOTES")notes()}
+function overview(){
+document.getElementById("view").innerHTML=`<section class="panel"><div class="tiny">CASE STATUS</div><h2>INVESTIGATION ACTIVE</h2><div class="stats"><div class="stat"><strong>5 / 18</strong><span class="tiny">EVIDENCE AVAILABLE</span></div><div class="stat"><strong>${state.viewed.length}</strong><span class="tiny">ANALYZED</span></div><div class="stat"><strong>0 / 3</strong><span class="tiny">PUZZLES SOLVED</span></div></div><div class="alert"><b>23:17</b> — Appel d'urgence provenant du 17 rue des Ormes.</div><p class="document">La maison est officiellement inhabitée depuis douze ans.
+
+Une patrouille arrive à 23:29. Toutes les ouvertures paraissent verrouillées. Aucun occupant n'est découvert.
+
+Un téléphone encore allumé se trouve dans la salle à manger.
+
+Élise Morel n'a plus donné signe de vie.</p><button class="btn" onclick="go('EVIDENCE')">OPEN EVIDENCE DATABASE</button></section>`}
+function database(){
+document.getElementById("view").innerHTML=`<section class="grid">${evidence.map(e=>`<article class="card ${e.open?"available":"locked"}" ${e.open?`onclick="openEvidence('${e.id}')"`:""}><div class="tiny">${e.id} // ${e.type}</div><h3>${e.open?e.title:"████████████"}</h3><div class="status">${e.open?(state.viewed.includes(e.id)?"● ANALYZED":"● AVAILABLE"):"🔒 CLASSIFIED"}</div></article>`).join("")}</section>`}
+function esc(s){return (s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")}
+function openEvidence(id){
+const e=evidence.find(x=>x.id===id);if(!state.viewed.includes(id)){state.viewed.push(id);save()}
+document.getElementById("view").innerHTML=`<button class="btn" onclick="go('EVIDENCE')">← EVIDENCE DATABASE</button><section class="panel" style="margin-top:12px"><div class="tiny">EVIDENCE // ${e.id} // ${e.type}</div><h2>${e.title}</h2><div class="document">${e.body}</div><hr class="rule"><div class="tiny">INVESTIGATOR NOTE</div><textarea class="note" placeholder="Ajouter une note à cette preuve..." oninput="note('${id}',this.value)">${esc(state.notes[id])}</textarea></section>`}
+function note(id,val){state.notes[id]=val;save()}
+function notes(){
+const arr=Object.entries(state.notes).filter(x=>x[1]&&x[1].trim());
+document.getElementById("view").innerHTML=arr.length?`<section class="grid">${arr.map(([id,text])=>{const e=evidence.find(x=>x.id===id);return `<article class="card"><div class="tiny">${id}</div><h3>${e?e.title:id}</h3><div class="document">${esc(text)}</div></article>`}).join("")}</section>`:`<section class="panel"><div class="tiny">INVESTIGATOR NOTES</div><h2>NO NOTES RECORDED</h2><p class="document">Ouvrez une pièce à conviction pour ajouter vos observations.</p></section>`}
+renderTabs();overview();
+setTimeout(()=>document.getElementById("boot").classList.add("done"),1800);
+</script>
+</body>
+</html>
